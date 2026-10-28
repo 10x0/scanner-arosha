@@ -1,0 +1,74 @@
+:root {
+  --bg: #f1f5f2; --card: #fff; --tx: #10201a; --mu: #5a6b62; --bd: #d9e3dc;
+  --ac: #4ade80; --on: #052e16; --act: #166534; --nav: #06150f;
+  --ok: #15803d; --bad: #b91c1c; --wa: #b45309;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #09120d; --card: #111c16; --tx: #e6efe9; --mu: #93a89b; --bd: #233328;
+    --ac: #4ade80; --on: #052e16; --act: #4ade80; --nav: #030b07;
+    --ok: #4ade80; --bad: #f87171; --wa: #fbbf24;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0; font: 16px/1.45 system-ui, Segoe UI, Arial, sans-serif;
+  background: var(--bg); color: var(--tx);
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.shell { display: flex; min-height: 100vh; }
+nav { width: 210px; background: var(--nav); color: #c4d8cb; padding: 14px 8px; flex-shrink: 0; }
+nav b { display: flex; align-items: center; gap: 8px; color: #fff; padding: 6px 10px 14px; font-size: 15px; line-height: 1.2; }
+nav b img { width: 30px; height: 30px; }
+nav a { display: block; padding: 10px; border-radius: 6px; cursor: pointer; color: #c4d8cb; text-decoration: none; }
+nav a.on, nav a:hover { background: var(--ac); color: var(--on); }
+main { flex: 1; min-width: 0; padding: 16px; }
+header { display: flex; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+h1 { font-size: 22px; margin: 0 0 12px; }
+h2 { font-size: 17px; margin: 0 0 8px; }
+.g { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.c { background: var(--card); border: 1px solid var(--bd); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+.g .c { margin: 0; }
+.n { font-size: 28px; font-weight: 700; }
+.l { color: var(--mu); font-size: 13px; }
+input, select, textarea, button, .btn {
+  font: inherit; padding: 9px 10px; border: 1px solid var(--bd); border-radius: 6px;
+  background: var(--card); color: var(--tx); max-width: 100%;
+}
+button, .btn {
+  background: var(--ac); color: var(--on); font-weight: 600; border: 0; cursor: pointer;
+  text-decoration: none; display: inline-block;
+}
+button.s, .btn.s { background: transparent; color: var(--act); border: 1px solid var(--act); }
+button.d { background: var(--bad); color: #fff; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+.r { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.t { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--bd); white-space: nowrap; }
+th { color: var(--mu); font-weight: 600; }
+.p { padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--bd); }
+.Available { color: var(--ok); }
+.Issued { color: var(--act); }
+.Damaged, .Missing { color: var(--bad); }
+.Maintenance, .Retired { color: var(--wa); }
+#msg {
+  position: fixed; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 12px 16px; border-radius: 8px; color: #fff; max-width: 80vw; z-index: 30;
+}
+.bar { height: 14px; background: var(--ac); border-radius: 4px; min-width: 2px; }
+.note { font-size: 13px; color: var(--wa); }
+.err { font-size: 14px; color: var(--bad); width: 100%; }
+.overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 20; padding: 16px; }
+.auth { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.auth .c { width: 340px; max-width: 100%; margin: 0; }
+.logo { background: var(--nav); border-radius: 14px; padding: 10px; display: inline-flex; margin-bottom: 10px; }
+.w100 { width: 100%; }
+@media (max-width: 720px) {
+  .shell { flex-direction: column; }
+  nav { width: auto; display: flex; overflow-x: auto; padding: 6px; }
+  nav b { display: none; }
+  nav a { white-space: nowrap; }
+}
+@media print { nav, .r, button, header { display: none; } }
