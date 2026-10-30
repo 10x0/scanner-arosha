@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useFeedback, useRun } from '@/components/feedback';
 import { DEVICE_TYPES, type DeviceStatus } from '@/lib/types';
-import { addDevice, putUnderRepair, setDeviceStatus } from '../actions';
+import { addDevice, archiveDevice, deleteDevice, putUnderRepair, setDeviceStatus } from '../actions';
 
 export function AddDevice() {
   const { run, pending } = useRun();
@@ -28,8 +28,9 @@ export function AddDevice() {
   );
 }
 
-export function DeviceActions({ id, no, status, canRepair, canMissing }: {
-  id: string; no: string; status: DeviceStatus; canRepair: boolean; canMissing: boolean;
+export function DeviceActions({ id, no, status, archived, canRepair, canMissing, canDelete, hasHistory }: {
+  id: string; no: string; status: DeviceStatus; archived: boolean;
+  canRepair: boolean; canMissing: boolean; canDelete: boolean; hasHistory: boolean;
 }) {
   const { confirm } = useFeedback();
   const { run, pending } = useRun();
@@ -44,12 +45,27 @@ export function DeviceActions({ id, no, status, canRepair, canMissing }: {
     if (r) run(() => setDeviceStatus(id, no, s, r.note));
   }
 
+  async function remove() {
+    const r = await confirm({
+      title: `Permanently delete ${no}? This cannot be undone.`,
+      input: { placeholder: 'Reason (required)', required: true },
+    });
+    if (r) run(() => deleteDevice(id, no, r.value));
+  }
+  async function archive() {
+    const r = await confirm({
+      title: `Archive ${no}? It leaves the active list; all history is kept.`,
+      input: { placeholder: 'Reason (required)', required: true },
+    });
+    if (r) run(() => archiveDevice(id, no, r.value));
+  }
+
   return (
     <div className="r" style={{ margin: 0 }}>
-      {canRepair && (status === 'Available' || status === 'Damaged') && (
+      {canRepair && !archived && (status === 'Available' || status === 'Damaged') && (
         <button className="s" disabled={pending} onClick={repair}>Put under repair</button>
       )}
-      {canMissing && status !== 'Missing' && status !== 'Retired' && (
+      {canMissing && !archived && status !== 'Missing' && status !== 'Retired' && (
         <>
           <button className="s" disabled={pending} onClick={() => mark('Missing')}>Declare missing</button>
           <button className="s" disabled={pending} onClick={() => mark('Retired')}>Retire</button>
@@ -57,6 +73,12 @@ export function DeviceActions({ id, no, status, canRepair, canMissing }: {
       )}
       {canMissing && status === 'Missing' && (
         <button className="s" disabled={pending} onClick={() => mark('Available')}>Mark found</button>
+      )}
+      {canDelete && !hasHistory && (
+        <button className="d" disabled={pending} onClick={remove}>Delete</button>
+      )}
+      {canDelete && hasHistory && !archived && status !== 'Issued' && (
+        <button className="s" disabled={pending} onClick={archive}>Archive</button>
       )}
     </div>
   );

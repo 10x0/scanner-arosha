@@ -3,7 +3,7 @@ import { can } from '@/lib/perm';
 import { createClient } from '@/lib/supabase/server';
 import { isDateStr, todayStr } from '@/lib/time';
 import { fetchReport, REPORT_TYPES, reportCells, RH, type ReportType } from '@/lib/reports';
-import { SHIFTS } from '@/lib/types';
+import { SHIFTS, SHIFT_LABEL } from '@/lib/types';
 import { Table } from '@/components/ui';
 import { PrintButton } from './print-button';
 
@@ -15,7 +15,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const type: ReportType = REPORT_TYPES.find((t) => t === sp.type) ?? 'Daily log';
   // No ?date= at all => today for the daily log; an explicitly empty date => all dates
   const date = sp.date === undefined ? (type === 'Daily log' ? todayStr() : '') : isDateStr(sp.date) ? sp.date : '';
-  const shift = SHIFTS.includes(sp.shift ?? '') ? (sp.shift as string) : '';
+  const shift = (SHIFTS as readonly string[]).includes(sp.shift ?? '') ? (sp.shift as string) : '';
 
   const rows = await fetchReport(await createClient(), type, date, shift);
   const qs = new URLSearchParams({ type, date, shift }).toString();
@@ -28,7 +28,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         <input type="date" name="date" defaultValue={date} />
         <select name="shift" defaultValue={shift}>
           <option value="">All shifts</option>
-          {SHIFTS.map((s) => <option key={s}>{s}</option>)}
+          {SHIFTS.map((s) => <option key={s} value={s}>{SHIFT_LABEL[s]}</option>)}
         </select>
         <button className="s">Apply</button>
         {can(p.role, 'export') && <a className="btn" href={`/api/export?${qs}`}>Download CSV</a>}
@@ -38,7 +38,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         <Table head={RH} rows={rows.map(reportCells)} />
         {rows.length >= 5000 && <p className="note">Showing the latest 5,000 rows. Narrow the filters.</p>}
       </div>
-      <p className="note">Exports respect the filters above.</p>
+      <p className="note">Exports respect the filters above. The shift filter matches the shift the device was issued on.</p>
     </>
   );
 }

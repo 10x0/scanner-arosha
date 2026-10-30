@@ -21,7 +21,7 @@ Redis is deliberately **not** used for caching: dashboard numbers are cheap inde
 
 ### 1. Supabase
 1. Create a project (pick a region near your warehouse and, later, your Vercel functions).
-2. SQL Editor → run `supabase/migrations/0001_init.sql`. (Or `supabase db push` with the CLI.)
+2. Apply the migrations in `supabase/migrations/` **in order** (`20260101000000_init.sql`, then `20260102000000_updates.sql`). Use `npx supabase db push` (the dashboard SQL editor rejects multi-statement files with "cannot insert multiple commands into a prepared statement").
 3. *(Optional)* run `supabase/seed.sql` for the POC's demo devices/staff. Skip in production.
 4. Authentication → Providers → Email: **disable "Allow new users to sign up"**, and set minimum password length to 8.
 5. Settings → API: copy the project URL, `anon` key and `service_role` key.
@@ -61,3 +61,29 @@ npm run dev
 - No bulk device/staff import yet (use the Supabase table editor's CSV import, or add a page).
 - No tests included. Priority candidates: the SQL functions (pgTAP) and a Playwright smoke test of issue → return.
 - Excel (.xlsx) export and Google Sheets from the POC's notes are not built; CSV only.
+
+## Update 2: transfers, Day/Night shifts, mobile dropdowns, admin-only delete
+
+Migration `20260102000000_updates.sql` is **incremental and non-destructive**: new columns/tables only, no rows removed.
+Old `Morning`/`Afternoon` transaction shifts are mapped to `Day`; the original value is kept in `transactions.legacy_shift`.
+If you already applied the first migration, just run `npx supabase db push` again.
+
+**Transfer / reassign** (`Bulk` page, and a *Transfer* button on every issued device)
+- One database transaction: closes the holder's assignment as `end_type = 'transfer'` (not a return) and opens a linked one for the new holder.
+- `transfers` table records original receiver, from, to, device, shift, operator, note, batch and timestamp; `transactions.origin_tx` always points to the very first issue, so "who originally received it / who holds it now" is always answerable.
+- Per-device button, checkboxes, "select this handover" (by original batch) and "select all". The old holder immediately stops appearing as responsible.
+- Reports/dashboard count transfers separately, never as returns.
+
+**Shifts**: `Day Shift` / `Night Shift` toggle on issue, return, bulk and transfer; stored on every transaction (issue shift and return/transfer shift). Admins set the start times in **Settings**; forms pre-select the current shift. The report shift filter matches the *issue* shift.
+
+**Delete / archive (administrator only, enforced in the database)**
+- `delete_device`, `delete_staff`, `archive_device`, `set_staff_active` all require the Administrator role inside Postgres; tables have no direct DELETE grant. Hiding buttons is cosmetic.
+- Delete is refused for anything with an active assignment or any history; those get **Archive** (devices, status Retired, hidden from pickers, history kept) or **Deactivate** (staff).
+- A reason is required and is written to the audit log with the administrator and timestamp.
+
+**Mobile**: searchable staff/device dropdowns (staff show employee ID; devices searchable by number, type, serial, notes; Issue lists show only Available devices). Bulk uses a multi-select with chips; scanning a code + Enter, or pasting a list, adds devices. Inputs/buttons are 44px on phones; tables scroll inside their own container, the page never scrolls sideways.
+
+### Testing
+Automated, SQL: `supabase/tests/scenarios.sql` runs your scenarios 1-7, 9 and 10 (10 devices bulk-issued, 3 then 7 transferred, history, shifts, non-admin refusals, admin delete/archive). It is one statement, rolls itself back, and finishes by raising `ALL 10 SCENARIOS PASSED`. Run it on a dev project, never production.
+
+Manual (scenario 8, phones): on a real phone open Issue, Bulk and Transfer; check the dropdown opens under the field above the keyboard, typing filters, taps select, nothing scrolls sideways. Also try Safari on iOS and Chrome on Android.

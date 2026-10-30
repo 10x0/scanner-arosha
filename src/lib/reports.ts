@@ -1,13 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { dayBounds, fmt, todayStr } from './time';
-import type { Tx } from './types';
+import { shiftLabel, type Tx } from './types';
 
 export const REPORT_TYPES = ['Daily log', 'Currently issued', 'Unreturned'] as const;
 export type ReportType = (typeof REPORT_TYPES)[number];
 
 export const RH = [
-  'Transaction', 'Batch', 'Shift', 'Device', 'Staff', 'Issued', 'Returned',
-  'Issued by', 'Received by', 'Condition', 'Status', 'Notes',
+  'Transaction', 'Batch', 'Event', 'Issue shift', 'Return shift', 'Device', 'Staff',
+  'Issued', 'Ended', 'Issued by', 'Processed by', 'Condition', 'Status', 'Notes',
 ];
 
 export async function fetchReport(sb: SupabaseClient, type: ReportType, date: string, shift: string) {
@@ -26,7 +26,8 @@ export async function fetchReport(sb: SupabaseClient, type: ReportType, date: st
 }
 
 export const reportCells = (x: Tx): string[] => [
-  x.id.slice(0, 8), x.batch_ref ?? '', x.shift, x.device_no, x.staff_name,
+  x.id.slice(0, 8), x.batch_ref ?? '', x.transferred_from ? 'Transfer in' : 'Issue',
+  shiftLabel(x.shift), x.return_shift ? shiftLabel(x.return_shift) : '', x.device_no, x.staff_name,
   fmt(x.issued_at), fmt(x.returned_at), x.issued_by_name, x.received_by_name ?? '',
-  x.return_condition ?? '', x.returned_at ? 'Returned' : 'Outstanding', x.notes,
+  x.return_condition ?? '', x.end_type === 'transfer' ? 'Transferred' : x.returned_at ? 'Returned' : 'Outstanding', x.notes,
 ];

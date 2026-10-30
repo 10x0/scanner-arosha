@@ -25,15 +25,14 @@ const clean = (s: string | undefined | null) => (s ?? '').trim();
 const batchRef = () => 'B-' + crypto.randomUUID().slice(0, 8).toUpperCase();
 
 // ── Issue / Return ──────────────────────────────────────────
-export async function issueOne(no: string, staffId: string, notes: string, staffName: string) {
-  return call('issue_devices', { p_device_nos: [clean(no)], p_staff_id: staffId, p_notes: clean(notes), p_batch: null },
-    `${clean(no)} issued to ${staffName}`);
+export async function issueOne(no: string, staffId: string, notes: string, staffName: string, shift: string) {
+  return call('issue_devices', { p_device_nos: [clean(no)], p_staff_id: staffId, p_notes: clean(notes), p_batch: null, p_shift: shift },
+    `${clean(no)} issued to ${staffName} (${shift} shift)`);
 }
 
-export async function returnOne(no: string, cond: string, notes: string) {
-  const r = await call('return_devices', { p_items: [{ no: clean(no), cond }], p_notes: clean(notes), p_batch: null },
+export async function returnOne(no: string, cond: string, notes: string, shift: string) {
+  return call('return_devices', { p_items: [{ no: clean(no), cond }], p_notes: clean(notes), p_batch: null, p_shift: shift },
     `${clean(no)} returned${cond !== 'Good' ? ' – damage record opened' : ''}`);
-  return r;
 }
 
 // ── Bulk ────────────────────────────────────────────────────
@@ -67,17 +66,23 @@ export async function reviewBatch(mode: 'Issue' | 'Return', staffId: string, raw
   return { ok: true, rows: data as { no: string; error: string | null }[], staffName, held };
 }
 
-export async function bulkIssue(nos: string[], staffId: string) {
+export async function bulkIssue(nos: string[], staffId: string, shift: string) {
   const ref = batchRef();
-  const r = await call('issue_devices', { p_device_nos: nos, p_staff_id: staffId, p_notes: '', p_batch: ref },
-    `Batch ${ref} complete (${nos.length} devices)`);
-  return r;
+  return call('issue_devices', { p_device_nos: nos, p_staff_id: staffId, p_notes: '', p_batch: ref, p_shift: shift },
+    `Batch ${ref} complete (${nos.length} devices, ${shift} shift)`);
 }
 
-export async function bulkReturn(items: { no: string; cond: string }[]) {
+export async function bulkReturn(items: { no: string; cond: string }[], shift: string) {
   const ref = batchRef();
-  return call('return_devices', { p_items: items, p_notes: '', p_batch: ref },
-    `Batch ${ref} complete (${items.length} devices)`);
+  return call('return_devices', { p_items: items, p_notes: '', p_batch: ref, p_shift: shift },
+    `Batch ${ref} complete (${items.length} devices, ${shift} shift)`);
+}
+
+// ── Transfer / reassign (a transfer, not a return + new issue) ─
+export async function transferDevices(nos: string[], toStaffId: string, shift: string, note: string, toName: string) {
+  const ref = 'T-' + crypto.randomUUID().slice(0, 8).toUpperCase();
+  return call('transfer_devices', { p_device_nos: nos, p_to_staff: toStaffId, p_shift: shift, p_note: clean(note), p_batch: ref },
+    `${nos.length} device(s) transferred to ${toName} (${ref})`);
 }
 
 // ── Inventory ───────────────────────────────────────────────
@@ -98,8 +103,25 @@ export async function addStaff(name: string, emp: string, dept: string, shift: s
   return call('add_staff', { p_name: clean(name), p_emp: clean(emp), p_dept: clean(dept), p_shift: shift },
     `${clean(name)} added`);
 }
-export async function setStaffActive(id: string, active: boolean) {
-  return call('set_staff_active', { p_id: id, p_active: active }, active ? 'Staff member activated' : 'Staff member deactivated');
+export async function setStaffActive(id: string, active: boolean, reason: string) {
+  return call('set_staff_active', { p_id: id, p_active: active, p_reason: clean(reason) },
+    active ? 'Staff member activated' : 'Staff member deactivated');
+}
+
+// ── Administrator-only delete / archive (re-checked in the database) ─
+export async function deleteDevice(id: string, no: string, reason: string) {
+  return call('delete_device', { p_device_id: id, p_reason: clean(reason) }, `${no} deleted`);
+}
+export async function archiveDevice(id: string, no: string, reason: string) {
+  return call('archive_device', { p_device_id: id, p_reason: clean(reason) }, `${no} archived (history kept)`);
+}
+export async function deleteStaff(id: string, name: string, reason: string) {
+  return call('delete_staff', { p_id: id, p_reason: clean(reason) }, `${name} deleted`);
+}
+
+// ── Settings ────────────────────────────────────────────────
+export async function setShiftTimes(dayStart: string, nightStart: string) {
+  return call('set_shift_times', { p_day_start: dayStart, p_night_start: nightStart }, 'Shift times saved');
 }
 
 // ── Damage / repair ─────────────────────────────────────────

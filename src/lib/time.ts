@@ -36,3 +36,11 @@ export function dayBounds(dateStr: string) {
 
 export const fmt = (t: string | null | undefined) =>
   t ? new Date(t).toLocaleString('en-GB', { timeZone: TZ }) : '—';
+
+/** Which shift "now" falls in, given the configured start times (HH:MM). Day = [dayStart, nightStart). */
+export function currentShift(dayStart: string, nightStart: string, now = new Date()): 'Day' | 'Night' {
+  const t = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now);
+  const d = dayStart.slice(0, 5), n = nightStart.slice(0, 5);
+  const inDay = d <= n ? t >= d && t < n : t >= d || t < n;
+  return inDay ? 'Day' : 'Night';
+}

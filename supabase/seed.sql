@@ -4,8 +4,8 @@ insert into public.devices (device_no, type, notes)
 select 'SC-' || lpad(i::text, 3, '0'), 'PDA', 'DEMO DATA' from generate_series(1, 12) i;
 
 insert into public.staff (name, emp_no, dept, shift) values
-  ('Amina Khan',  'E101', 'Sortation', 'Morning'),
-  ('Tom Reid',    'E102', 'Sortation', 'Morning'),
-  ('Lucia Gomez', 'E103', 'Sortation', 'Afternoon'),
+  ('Amina Khan',  'E101', 'Sortation', 'Day'),
+  ('Tom Reid',    'E102', 'Sortation', 'Day'),
+  ('Lucia Gomez', 'E103', 'Sortation', 'Day'),
   ('Ravi Patel',  'E104', 'Sortation', 'Night'),
-  ('Sam O’Neil',  'E105', 'Sortation', 'Afternoon');
+  ('Sam O’Neil',  'E105', 'Sortation', 'Day');

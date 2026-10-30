@@ -16,7 +16,7 @@ export default async function Dashboard() {
   const cards: [string, number][] = [
     ['Registered', s.registered], ['Available', cnt('Available')], ['Issued', cnt('Issued')],
     ['Damaged', cnt('Damaged')], ['Maintenance', cnt('Maintenance')], ['Missing', cnt('Missing')],
-    ['Overdue', s.overdue], ['Staff today', s.staff_today], ['Out today', s.out_today], ['Back today', s.back_today],
+    ['Overdue', s.overdue], ['Staff today', s.staff_today], ['Out today', s.out_today], ['Back today', s.back_today], ['Transfers today', s.transfers_today ?? 0],
   ];
   const mx = Math.max(1, ...STATUSES.map(cnt));
 

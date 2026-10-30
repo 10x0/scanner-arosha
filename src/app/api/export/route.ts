@@ -23,11 +23,11 @@ export async function GET(req: NextRequest) {
     const { data, error } = await sb.from('devices').select('*').order('device_no').limit(20000);
     if (error) return new NextResponse('Export failed', { status: 500 });
     name = 'inventory.csv';
-    rows = [['Device', 'Type', 'Serial', 'Status', 'Note'], ...((data ?? []) as Device[]).map((d) => [d.device_no, d.type, d.serial, d.status, d.notes])];
+    rows = [['Device', 'Type', 'Serial', 'Status', 'Archived', 'Note'], ...((data ?? []) as Device[]).map((d) => [d.device_no, d.type, d.serial, d.status, d.archived_at ? 'Yes' : '', d.notes])];
   } else {
     const type = REPORT_TYPES.find((t) => t === sp.get('type')) ?? 'Daily log';
     const date = isDateStr(sp.get('date') ?? undefined) ? (sp.get('date') as string) : '';
-    const shift = SHIFTS.includes(sp.get('shift') ?? '') ? (sp.get('shift') as string) : '';
+    const shift = (SHIFTS as readonly string[]).includes(sp.get('shift') ?? '') ? (sp.get('shift') as string) : '';
     try {
       const data = await fetchReport(sb, type, date, shift);
       rows = [RH, ...data.map(reportCells)];
