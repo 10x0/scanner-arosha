@@ -14,7 +14,7 @@ export default async function BulkPage({ searchParams }: { searchParams: Promise
   const sb = await createClient();
   const [staff, out, avail, defaultShift] = await Promise.all([
     sb.from('staff').select('id,name,emp_no,active').order('name').limit(2000),
-    sb.from('transactions').select('*').is('returned_at', null).order('device_no').limit(5000),
+    sb.from('transactions').select('staff_id,staff_name,device_no,shift,issued_at,batch_ref,origin_batch').is('returned_at', null).order('device_no').limit(5000),
     sb.from('devices').select('device_no,type,serial,notes').eq('status', 'Available').is('archived_at', null).order('device_no').limit(1000),
     getDefaultShift(),
   ]);

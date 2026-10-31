@@ -10,7 +10,7 @@ export async function updateSession(request: NextRequest) {
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
-        setAll: (list: any[]) => {
+        setAll: (list: { name: string; value: string; options?: any }[]) => {
           list.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
           list.forEach(({ name, value, options }) =>
@@ -21,9 +21,10 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies the JWT signature locally (no network call) and refreshes an expired session.
+  // Falls back to a network check only if the project still uses legacy symmetric JWT keys.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
   const path = request.nextUrl.pathname;
   const open = path.startsWith('/login') || path.startsWith('/setup');
   if (!user && !open) {

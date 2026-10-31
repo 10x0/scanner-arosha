@@ -14,7 +14,7 @@ export default async function IssuePage() {
   const [staff, avail, out, defaultShift] = await Promise.all([
     sb.from('staff').select('id,name,emp_no').eq('active', true).order('name'),
     sb.from('devices').select('device_no,type,serial,notes').eq('status', 'Available').is('archived_at', null).order('device_no').limit(1000),
-    sb.from('transactions').select('*').is('returned_at', null).order('issued_at', { ascending: false }).limit(1000),
+    sb.from('transactions').select('id,staff_id,staff_name,device_no,shift,issued_at,origin_tx').is('returned_at', null).order('issued_at', { ascending: false }).limit(1000),
     getDefaultShift(),
   ]);
   const outRows = (out.data ?? []) as Tx[];

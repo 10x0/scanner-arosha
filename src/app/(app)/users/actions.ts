@@ -1,6 +1,6 @@
 'use server';
 import { revalidatePath } from 'next/cache';
-import { getProfile, type Profile } from '@/lib/auth';
+import { getVerifiedProfile, type Profile } from '@/lib/auth';
 import { auditAs } from '@/lib/audit';
 import { can, ROLES, type Role } from '@/lib/perm';
 import { MIN_PASSWORD, USERNAME_RE, usernameToEmail } from '@/lib/env';
@@ -12,7 +12,7 @@ const done = (message: string): Result => { revalidatePath('/users'); return { o
 
 /** Every action re-verifies the caller is an active administrator (the page check is not enough). */
 async function admin(): Promise<Profile | null> {
-  const p = await getProfile();
+  const p = await getVerifiedProfile();
   return p && can(p.role, 'manage') ? p : null;
 }
 

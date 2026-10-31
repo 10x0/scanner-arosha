@@ -87,3 +87,17 @@ If you already applied the first migration, just run `npx supabase db push` agai
 Automated, SQL: `supabase/tests/scenarios.sql` runs your scenarios 1-7, 9 and 10 (10 devices bulk-issued, 3 then 7 transferred, history, shifts, non-admin refusals, admin delete/archive). It is one statement, rolls itself back, and finishes by raising `ALL 10 SCENARIOS PASSED`. Run it on a dev project, never production.
 
 Manual (scenario 8, phones): on a real phone open Issue, Bulk and Transfer; check the dropdown opens under the field above the keyboard, typing filters, taps select, nothing scrolls sideways. Also try Safari on iOS and Chrome on Android.
+
+## Performance
+
+Code-level (already in the project):
+- Sessions are verified locally with `getClaims()` instead of a network call to Supabase Auth on every request (middleware and pages). Role/active status still comes from the database each time, so deactivating a user takes effect immediately. User-management actions still use the stricter `getUser()` check.
+- Pages fetch only the columns they render, and independent queries run in parallel.
+- `(app)/loading.tsx` shows a skeleton instantly while a page loads.
+- `supabase/migrations/20260103000000_perf_indexes.sql` adds indexes for history lookups, delete-eligibility checks and status counts.
+
+Settings to check (these usually matter most):
+1. **Region match.** Supabase → Project Settings → General shows your database region. In Vercel → Project Settings → Functions, set **Function Region** to the nearest one (London DB → `lhr1`; the default is often `iad1`, which adds a transatlantic round trip to every query).
+2. **Signing keys.** `getClaims()` is only local with asymmetric keys: Supabase → Project Settings → JWT Keys. New projects have this; if yours says legacy secret, use "Migrate to signing keys".
+3. **Upstash region** should also be near the app (it is only used on sign-in).
+4. Redeploy after changes; the first request after idle can be slower on Vercel's free tier (cold start).
